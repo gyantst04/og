@@ -72,6 +72,28 @@ system_info() {
     read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
 }
 
+# Function to show detailed disk info
+disk_info() {
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}          DETAILED DISK INFORMATION${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    echo -e "${YELLOW}Disk Usage:${NC}"
+    df -h | grep -v tmpfs
+    
+    echo -e "\n${YELLOW}Largest Directories in /:${NC}"
+    sudo du -h --max-depth=1 / 2>/dev/null | sort -hr | head -n 10
+    
+    echo -e "\n${YELLOW}Disk Partitions:${NC}"
+    lsblk
+    
+    echo -e "\n${YELLOW}IO Stats:${NC}"
+    iostat -x 1 1 2>/dev/null || echo "iostat not available"
+
+    echo ""
+    read -p "$(echo -e "${YELLOW}Press Enter to continue...${NC}")" -n 1
+}
+
 # Function to display the main menu
 show_menu() {
     clear
@@ -89,10 +111,12 @@ show_menu() {
     echo -e " 8) ${BLUE}System Information${NC}"
     echo -e " 9) ${BLUE}Tailscale${NC}"
     echo -e "10) ${BLUE}Database Setup${NC}"
+    echo -e "11) ${BLUE}System Disk Info${NC}"
+    echo -e "12) ${BLUE}DeathSpider Script${NC}"
     echo -e " 0) ${RED}Exit${NC}"
 
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${YELLOW}Select an option [0-10]: ${NC}"
+    echo -e "${YELLOW}Select an option [0-12]: ${NC}"
 }
 
 # Database setup function
@@ -152,6 +176,8 @@ while true; do
         8) system_info ;;
         9) tailscale_setup ;;
         10) database_setup ;;
+        11) disk_info ;;
+        12) run_remote_script "https://raw.githubusercontent.com/gyantst04/DeathSpider/refs/heads/main/7.sh" ;;
         0)
             echo -e "${GREEN}Goodbye!${NC}"
             exit 0
