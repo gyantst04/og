@@ -142,13 +142,13 @@ while true; do
     read -r choice
 
     case $choice in
-        1) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/panel2.sh" ;;
-        2) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/wing2.sh" ;;
-        3) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/update2.sh" ;;
-        4) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/uninstall2.sh" ;;
-        5) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/Blueprint2.sh" ;;
-        6) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/cloudflare.sh" ;;
-        7) run_remote_script "https://raw.githubusercontent.com/JishnuTheGamer/Vps/main/cd/th2.sh" ;;
+        1) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/panel.sh" ;;
+        2) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/wing.sh" ;;
+        3) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/update.sh" ;;
+        4) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/uninstall.sh" ;;
+        5) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/blueprint.sh" ;;
+        6) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/cf.sh" ;;
+        7) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/theme.sh" ;;
         8) system_info ;;
         9) tailscale_setup ;;
         10) database_setup ;;
