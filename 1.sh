@@ -91,18 +91,18 @@ set -euo pipefail
 clear
 cat << "BANNER"
 ================================================
-   ____            _                             
-  |  _ \ _ __ ___ | |_ _ __ ___  _ __ ___   __ _ 
-  | |_) | '__/ _ \| __| '_ ` _ \| '_ ` _ \ / _` |
-  |  __/| | | (_) | |_| | | | | | | | | | | (_| |
-  |_|   |_|  \___/ \__|_| |_| |_|_| |_| |_|\__,_|
+    _    _                 _  _____ _       _ 
+   / \  | | __ _ _ __ ___ | || ____| | ___ | |
+  / _ \ | |/ _` | '_ ` _ \| ||  _| | |/ _ \| |
+ / ___ \| | (_| | | | | | | || |___| | (_) | |
+/_/   \_\_|\__,_|_| |_| |_|_|_____|_|\___/|_|
                                   
-   Proxmox VE (Image format safe)
+   AlmaLinux (Image format safe)
 ================================================
 BANNER
 
 VM_DIR="$HOME/vm"
-IMG_FILE="$VM_DIR/proxmox-cloud.qcow2"
+IMG_FILE="$VM_DIR/almalinux-cloud.qcow2"
 SEED_FILE="$VM_DIR/seed.iso"
 MEMORY=30768
 CPUS=6
@@ -113,18 +113,18 @@ mkdir -p "$VM_DIR"
 cd "$VM_DIR"
 
 if [ ! -f "$IMG_FILE" ]; then
-    echo "[INFO] Downloading Proxmox VE cloud image..."
-    wget -q https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2 -O "$VM_DIR/proxmox-cloud.raw"
+    echo "[INFO] Downloading AlmaLinux cloud image..."
+    wget -q https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2 -O "$VM_DIR/almalinux-cloud.raw"
 
     echo "[INFO] Checking image format..."
-    FORMAT=$(qemu-img info "$VM_DIR/proxmox-cloud.raw" | grep "file format" | awk '{print $3}')
+    FORMAT=$(qemu-img info "$VM_DIR/almalinux-cloud.raw" | grep "file format" | awk '{print $3}')
 
     if [ "$FORMAT" != "qcow2" ]; then
         echo "[WARN] Image is $FORMAT, converting to qcow2..."
-        qemu-img convert -f "$FORMAT" -O qcow2 "$VM_DIR/proxmox-cloud.raw" "$IMG_FILE"
-        rm "$VM_DIR/proxmox-cloud.raw"
+        qemu-img convert -f "$FORMAT" -O qcow2 "$VM_DIR/almalinux-cloud.raw" "$IMG_FILE"
+        rm "$VM_DIR/almalinux-cloud.raw"
     else
-        mv "$VM_DIR/proxmox-cloud.raw" "$IMG_FILE"
+        mv "$VM_DIR/almalinux-cloud.raw" "$IMG_FILE"
     fi
 
     echo "[INFO] Resizing image to $DISK_SIZE..."
@@ -132,7 +132,7 @@ if [ ! -f "$IMG_FILE" ]; then
 
     cat > user-data <<CLOUD
 #cloud-config
-hostname: proxmox
+hostname: almalinux
 manage_etc_hosts: true
 disable_root: false
 ssh_pwauth: true
@@ -148,16 +148,15 @@ resize_rootfs: true
 package_update: true
 package_upgrade: true
 runcmd:
- - apt-get update -y
- - apt-get upgrade -y
- - apt-get install -y sudo curl unzip git wget htop lsof
+ - dnf update -y
+ - dnf install -y sudo curl unzip git wget htop lsof
  - sed -ri "s/^#?PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
- - systemctl restart ssh
+ - systemctl restart sshd
 CLOUD
 
     cat > meta-data <<CLOUD
 instance-id: iid-local01
-local-hostname: proxmox
+local-hostname: almalinux
 CLOUD
 
     cloud-localds "$SEED_FILE" user-data meta-data
