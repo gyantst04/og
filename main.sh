@@ -113,10 +113,11 @@ show_menu() {
     echo -e "10) ${BLUE}Database Setup${NC}"
     echo -e "11) ${BLUE}System Disk Info${NC}"
     echo -e "12) ${BLUE}DeathSpider Script${NC}"
+    echo -e "13) ${BLUE}VPS Install${NC}"
     echo -e " 0) ${RED}Exit${NC}"
 
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${YELLOW}Select an option [0-12]: ${NC}"
+    echo -e "${YELLOW}Select an option [0-13]: ${NC}"
 }
 
 # Database setup function
@@ -178,6 +179,7 @@ while true; do
         10) database_setup ;;
         11) disk_info ;;
         12) run_remote_script "https://raw.githubusercontent.com/gyantst04/DeathSpider/refs/heads/main/7.sh" ;;
+        13) run_remote_script "https://raw.githubusercontent.com/gyantst04/og/refs/heads/main/ivps.sh" ;;
         0)
             echo -e "${GREEN}Goodbye!${NC}"
             exit 0
