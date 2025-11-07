@@ -102,28 +102,71 @@ cat << "BANNER"
 BANNER
 
 VM_DIR="$HOME/vm"
-IMG_FILE="$VM_DIR/proxmox-disk.qcow2"
-ISO_FILE="$VM_DIR/proxmox-ve.iso"
-MEMORY=4096
-CPUS=4
-DISK_SIZE=32G
+IMG_FILE="$VM_DIR/proxmox-cloud.qcow2"
+SEED_FILE="$VM_DIR/seed.iso"
+MEMORY=30768
+CPUS=6
+SSH_PORT=24
+DISK_SIZE=100G
 
 mkdir -p "$VM_DIR"
 cd "$VM_DIR"
 
-# Download Proxmox VE installer if not present
-if [ ! -f "$ISO_FILE" ]; then
-    echo "[INFO] Downloading Proxmox VE installer..."
-    wget -q https://download.proxmox.com/iso/proxmox-ve_8.0-2.iso -O "$ISO_FILE"
-fi
-
-# Create disk image if not present
 if [ ! -f "$IMG_FILE" ]; then
-    echo "[INFO] Creating disk image..."
-    qemu-img create -f qcow2 "$IMG_FILE" "$DISK_SIZE"
+    echo "[INFO] Downloading Proxmox VE cloud image..."
+    wget -q https://cloud.debian.org/images/cloud/bullseye/latest/debian-11-genericcloud-amd64.qcow2 -O "$VM_DIR/proxmox-cloud.raw"
+
+    echo "[INFO] Checking image format..."
+    FORMAT=$(qemu-img info "$VM_DIR/proxmox-cloud.raw" | grep "file format" | awk '{print $3}')
+
+    if [ "$FORMAT" != "qcow2" ]; then
+        echo "[WARN] Image is $FORMAT, converting to qcow2..."
+        qemu-img convert -f "$FORMAT" -O qcow2 "$VM_DIR/proxmox-cloud.raw" "$IMG_FILE"
+        rm "$VM_DIR/proxmox-cloud.raw"
+    else
+        mv "$VM_DIR/proxmox-cloud.raw" "$IMG_FILE"
+    fi
+
+    echo "[INFO] Resizing image to $DISK_SIZE..."
+    qemu-img resize "$IMG_FILE" "$DISK_SIZE"
+
+    cat > user-data <<CLOUD
+#cloud-config
+hostname: proxmox
+manage_etc_hosts: true
+disable_root: false
+ssh_pwauth: true
+chpasswd:
+  list: |
+    root:root
+  expire: false
+growpart:
+  mode: auto
+  devices: ["/"]
+  ignore_growroot_disabled: false
+resize_rootfs: true
+package_update: true
+package_upgrade: true
+runcmd:
+ - apt-get update -y
+ - apt-get upgrade -y
+ - apt-get install -y sudo curl unzip git wget htop lsof
+ - sed -ri "s/^#?PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+ - systemctl restart ssh
+CLOUD
+
+    cat > meta-data <<CLOUD
+instance-id: iid-local01
+local-hostname: proxmox
+CLOUD
+
+    cloud-localds "$SEED_FILE" user-data meta-data
+    echo "[INFO] VM setup complete!"
+else
+    echo "[INFO] VM image found, skipping setup..."
 fi
 
-echo "[INFO] Starting Proxmox VE installer..."
+echo "[INFO] Starting VM..."
 KVM_OPTS=""
 if [ -e /dev/kvm ]; then
     KVM_OPTS="-enable-kvm -cpu host"
@@ -132,26 +175,16 @@ else
     KVM_OPTS="-cpu max"
 fi
 
-echo "[INFO] Proxmox VE will start in QEMU."
-echo "[INFO] Installation notes:"
-echo "  - Disk: $IMG_FILE"
-echo "  - RAM: ${MEMORY}MB"
-echo "  - CPUs: $CPUS"
-echo "  - Boot from ISO to install Proxmox VE"
-echo ""
-echo "[INFO] Once installed, you can run the VM without ISO to boot Proxmox."
-
 exec qemu-system-x86_64 \
     $KVM_OPTS \
     -m "$MEMORY" \
     -smp "$CPUS" \
     -drive file="$IMG_FILE",format=qcow2,if=virtio \
-    -cdrom "$ISO_FILE" \
-    -boot order=cd \
+    -drive file="$SEED_FILE",format=raw,if=virtio \
+    -boot order=c \
     -device virtio-net-pci,netdev=n0 \
-    -netdev user,id=n0,hostfwd=tcp::8006-:8006,hostfwd=tcp::22-:22 \
-    -vga std \
-    -serial mon:stdio
+    -netdev user,id=n0,hostfwd=tcp::"$SSH_PORT"-:22 \
+    -nographic -serial mon:stdio
 EOF
 
   chmod +x "$HOME/script.sh"
